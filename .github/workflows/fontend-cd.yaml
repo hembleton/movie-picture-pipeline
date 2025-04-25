@@ -13,35 +13,53 @@ env:
   ECR_REPO: 607049766878.dkr.ecr.us-east-1.amazonaws.com/frontend
 
 jobs:
-  test:
+  test_job:
+    name: Test Frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: starter
-      - uses: actions/setup-node@v3
-        with:
-          node-version: latest
-      - run: npm ci
-      - run: CI=true npm test
 
-  lint:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: starter/frontend
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          path: starter
+      # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
           node-version: latest
-      - run: npm ci
-      - run: npx eslint . --fix
+
+      # Cache node_modules to speed up builds
+      - uses: actions/cache@v3
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Install the dependencies.
+      - run: cd starter/frontend && npm ci
+
+      # Run the tests
+      - run: cd starter/frontend && CI=true npm test
+
+  lint_job:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # Set up a Node.js environment using the specified node version.
+      - uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      # Cache node_modules to speed up builds
+      - uses: actions/cache@v3
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Install dependencies and run linting with --fix
+      - run: cd starter/frontend && npm ci && npx eslint . --fix
+
 
   build:
     needs: [test, lint]
