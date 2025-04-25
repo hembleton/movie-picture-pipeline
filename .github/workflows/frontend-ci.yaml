@@ -18,6 +18,10 @@ jobs:
       # Check out the code from the repository.
       - uses: actions/checkout@v3
 
+      # Verify the directory structure
+      - name: List files in the repository
+        run: ls -R
+
       # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
@@ -44,6 +48,10 @@ jobs:
       # Check out the code from the repository.
       - uses: actions/checkout@v3
 
+      # Verify the directory structure
+      - name: List files in the repository
+        run: ls -R
+
       # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
@@ -67,6 +75,10 @@ jobs:
     steps:
       # Check out the code from the repository.
       - uses: actions/checkout@v3
+
+      # Verify the directory structure
+      - name: List files in the repository
+        run: ls -R
 
       # Build Docker Image only if test and lint jobs succeed
       - name: Build Docker Image
