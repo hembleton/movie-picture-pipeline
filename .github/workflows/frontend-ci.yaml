@@ -37,27 +37,26 @@ jobs:
       - run: cd starter/frontend && CI=true npm test
 
   lint_job:
-  name: Lint Frontend
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v3
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
 
-    # Set up a Node.js environment using the specified node version.
-    - uses: actions/setup-node@v3
-      with:
-        node-version: latest
+      # Set up a Node.js environment using the specified node version.
+      - uses: actions/setup-node@v3
+        with:
+          node-version: latest
 
-    # Cache node_modules to speed up builds
-    - uses: actions/cache@v3
-      with:
-        path: starter/frontend/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
+      # Cache node_modules to speed up builds
+      - uses: actions/cache@v3
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-    # Install dependencies and run linting with --fix
-    - run: cd starter/frontend && npm ci && npx eslint . --fix
-
+      # Install dependencies and run linting with --fix
+      - run: cd starter/frontend && npm ci && npx eslint . --fix
 
   build_job:
     name: Build Docker Image
