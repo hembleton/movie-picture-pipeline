@@ -12,39 +12,36 @@ env:
 
 jobs:
   lint:
-    name: Lint frontend
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+        with:
+          path: starter
+      - uses: actions/setup-node@v3
         with:
           node-version: latest
       - run: npm ci
-      - name: Run Linter
-        run: npm run lint
+      - run: npm run lint
 
   test:
-    name: Test frontend
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+        with:
+          path: starter
+      - uses: actions/setup-node@v3
         with:
           node-version: latest
       - run: npm ci
-      - name: Run Tests
-        run: CI=true npm test
+      - run: CI=true npm test
 
   build:
-    name: Build Docker Image
     needs: [lint, test]
     runs-on: ubuntu-latest
     defaults:
@@ -52,6 +49,6 @@ jobs:
         working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker Image
-        run: docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }} -t mp-frontend:latest .
-
+        with:
+          path: starter
+      - run: docker build --build

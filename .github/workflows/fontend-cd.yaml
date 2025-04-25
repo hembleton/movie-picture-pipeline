@@ -20,6 +20,8 @@ jobs:
         working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
+        with:
+          path: starter
       - uses: actions/setup-node@v3
         with:
           node-version: latest
@@ -34,6 +36,8 @@ jobs:
         working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
+        with:
+          path: starter
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -58,6 +62,8 @@ jobs:
         working-directory: starter/frontend/k8s
     steps:
       - uses: actions/checkout@v3
+        with:
+          path: starter
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -70,5 +76,3 @@ jobs:
         run: kustomize edit set image frontend=${{ env.ECR_REPO }}:${{ github.sha }}
       - name: Apply Kubernetes Manifests
         run: kustomize build | kubectl apply -f -
-
-
