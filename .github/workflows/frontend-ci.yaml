@@ -58,7 +58,7 @@ jobs:
           node-version: latest
 
       # Cache node_modules to speed up builds
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: starter/frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
