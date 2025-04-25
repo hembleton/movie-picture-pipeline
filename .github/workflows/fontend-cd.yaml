@@ -1,4 +1,4 @@
-name: Frontend Continous Deployment
+name: Frontend Continuous Deployment
 
 on:
   push:
@@ -9,34 +9,40 @@ on:
 
 env:
   REACT_APP_MOVIE_API_URL: http://localhost:5000
-  AWS_REGION: us-east-1 
-  ECR_REPO: <your-ecr-repo-url>  # e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com/mp-frontend
+  AWS_REGION: us-east-1
+  ECR_REPO: 607049766878.dkr.ecr.us-east-1.amazonaws.com/frontend
 
 jobs:
   test:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: latest
-      - run: cd starter/frontend && npm ci
-      - run: cd starter/frontend && CI=true npm test
+      - run: npm ci
+      - run: CI=true npm test
 
   build:
     needs: test
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: starter/frontend
     steps:
       - uses: actions/checkout@v3
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
-      - name: Build and Tag Docker Image
+      - name: Build and Push Docker Image
         run: |
           IMAGE_TAG=${{ github.sha }}
           docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }} -t $ECR_REPO:$IMAGE_TAG .
@@ -49,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend/k8s
+        working-directory: starter/frontend/k8s
     steps:
       - uses: actions/checkout@v3
       - name: Configure AWS credentials
@@ -64,3 +70,5 @@ jobs:
         run: kustomize edit set image frontend=${{ env.ECR_REPO }}:${{ github.sha }}
       - name: Apply Kubernetes Manifests
         run: kustomize build | kubectl apply -f -
+
+
