@@ -15,12 +15,7 @@ jobs:
     name: Test Frontend
     runs-on: ubuntu-latest
     steps:
-      # Check out the code from the repository.
       - uses: actions/checkout@v3
-
-      # Verify the directory structure
-      - name: List files in the repository
-        run: ls -R
 
       # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
@@ -42,43 +37,34 @@ jobs:
       - run: cd starter/frontend && CI=true npm test
 
   lint_job:
-    name: Lint Frontend
-    runs-on: ubuntu-latest
-    steps:
-      # Check out the code from the repository.
-      - uses: actions/checkout@v3
+  name: Lint Frontend
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
 
-      # Verify the directory structure
-      - name: List files in the repository
-        run: ls -R
+    # Set up a Node.js environment using the specified node version.
+    - uses: actions/setup-node@v3
+      with:
+        node-version: latest
 
-      # Set up a Node.js environment using the specified node version.
-      - uses: actions/setup-node@v3
-        with:
-          node-version: latest
+    # Cache node_modules to speed up builds
+    - uses: actions/cache@v3
+      with:
+        path: starter/frontend/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
 
-      # Cache node_modules to speed up builds
-      - uses: actions/cache@v3
-        with:
-          path: starter/frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+    # Install dependencies and run linting with --fix
+    - run: cd starter/frontend && npm ci && npx eslint . --fix
 
-      # Install dependencies and run linting
-      - run: cd starter/frontend && npm ci && npm run lint --fix
 
   build_job:
     name: Build Docker Image
     runs-on: ubuntu-latest
     needs: [test_job, lint_job]
     steps:
-      # Check out the code from the repository.
       - uses: actions/checkout@v3
-
-      # Verify the directory structure
-      - name: List files in the repository
-        run: ls -R
 
       # Build Docker Image only if test and lint jobs succeed
       - name: Build Docker Image
