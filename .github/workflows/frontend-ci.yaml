@@ -1,0 +1,56 @@
+name: Frontend Continous Integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'starter/frontend/**'
+  workflow_dispatch:
+
+env:
+  REACT_APP_MOVIE_API_URL: http://localhost:5000
+
+jobs:
+  lint:
+    name: Lint frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+      - run: cd starter/frontend && npm ci
+      - name: Run Linter
+        run: cd starter/frontend && npm run lint
+
+  test:
+    name: Test frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+      - run: cd starter/frontend && npm ci
+      - name: Run Tests
+        run: cd starter/frontend npm run test
+
+  build:
+    name: Build Docker Image
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker Image
+        run: docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }} -t mp-frontend:latest .
