@@ -82,15 +82,16 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and Push Docker Image
-        ECR_REPOSITORY: frontend
-        IMAGE_TAG: 0.1
-        REACT_APP_MOVIE_API_URL: ${{ secrets.REACT_APP_MOVIE_API_URL }}
+        env:
+          ECR_REPO: frontend
+          IMAGE_TAG: 0.1
+          REACT_APP_MOVIE_API_URL: ${{ secrets.REACT_APP_MOVIE_API_URL }}
         run: |
           cd starter/frontend  # Navigate to the frontend directory
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . --build-arg="REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL"
+          docker build -t $ECR_REPO:$IMAGE_TAG . --build-arg="REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL"
           echo "docker build is success"
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REPO:$IMAGE_TAG
+          echo $ECR_REPO:$IMAGE_TAG
 
   deploy:
     needs: build
