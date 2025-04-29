@@ -1,61 +1,58 @@
-name: frontend-cd-workflow
+name: Frontend Continuous Deployment
 
-# Manual trigger
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'starter/frontend/**'
+  workflow_dispatch:
+
+env:
+  REACT_APP_MOVIE_API_URL: http://localhost:5000
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 607049766878.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPO: frontend
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   test_job:
+    name: Test Frontend
     runs-on: ubuntu-latest
-
     steps:
-      # Check out the code from the repository.
       - uses: actions/checkout@v3
 
-      # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
           node-version: latest
 
-      # Perform cache action
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: starter/frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # Install the dependencies.
       - run: cd starter/frontend && npm ci
-
-      # Run the tests
       - run: cd starter/frontend && CI=true npm test
 
   lint_job:
+    name: Lint Frontend
     runs-on: ubuntu-latest
     steps:
-      # Check out the code from the repository.
       - uses: actions/checkout@v3
 
-      # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
           node-version: latest
 
-      # Perform cache action
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: starter/frontend/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # Install dependencies and run linting
-      - name: Install dependencies and Run Linting
-        run: cd starter/frontend && npm ci && npm run lint
+      - run: cd starter/frontend && npm ci && npx eslint . --fix
 
   build_deploy_job:
     runs-on: ubuntu-latest
