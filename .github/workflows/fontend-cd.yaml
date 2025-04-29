@@ -10,7 +10,9 @@ on:
 env:
   REACT_APP_MOVIE_API_URL: http://localhost:5000
   AWS_REGION: us-east-1
-  ECR_REPO: 607049766878.dkr.ecr.us-east-1.amazonaws.com/frontend
+  ECR_REGISTRY: 607049766878.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPO: frontend
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   test_job:
@@ -19,12 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
           node-version: latest
 
-      # Cache node_modules to speed up builds
       - uses: actions/cache@v3
         with:
           path: starter/frontend/node_modules
@@ -32,10 +32,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # Install the dependencies.
       - run: cd starter/frontend && npm ci
-
-      # Run the tests
       - run: cd starter/frontend && CI=true npm test
 
   lint_job:
@@ -44,12 +41,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Set up a Node.js environment using the specified node version.
       - uses: actions/setup-node@v3
         with:
           node-version: latest
 
-      # Cache node_modules to speed up builds
       - uses: actions/cache@v3
         with:
           path: starter/frontend/node_modules
@@ -57,7 +52,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
-      # Install dependencies and run linting with --fix
       - run: cd starter/frontend && npm ci && npx eslint . --fix
 
   build:
@@ -82,16 +76,12 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and Push Docker Image
-        env:
-          ECR_REPO: frontend
-          IMAGE_TAG: 0.1
-          REACT_APP_MOVIE_API_URL: ${{ secrets.REACT_APP_MOVIE_API_URL }}
         run: |
-          cd starter/frontend  # Navigate to the frontend directory
-          docker build -t $ECR_REPO:$IMAGE_TAG . --build-arg="REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL"
+          cd starter/frontend
+          docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG . --build-arg="REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL"
           echo "docker build is success"
-          docker push $ECR_REPO:$IMAGE_TAG
-          echo $ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          echo $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
 
   deploy:
     needs: build
@@ -111,11 +101,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+
       - name: Update kubeconfig
         run: aws eks update-kubeconfig --region $AWS_REGION --name cluster
 
       - name: Set Image Tag in Kustomize
-        run: kustomize edit set image frontend=${{ env.ECR_REPO }}:${{ github.sha }}
+        run: kustomize edit set image frontend=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}:${{ env.IMAGE_TAG }}
 
       - name: Apply Kubernetes Manifests
         run: kustomize build | kubectl apply -f -
