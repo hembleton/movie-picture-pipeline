@@ -1,4 +1,4 @@
-name: Frontend Continous Integration
+name: Frontend Continuous Integration
 
 on:
   pull_request:
@@ -11,46 +11,61 @@ env:
   REACT_APP_MOVIE_API_URL: http://localhost:5000
 
 jobs:
-  lint:
-    name: Lint frontend
+  test_job:
+    name: Test Frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+
+      # Set up a Node.js environment using the specified node version.
+      - uses: actions/setup-node@v3
         with:
           node-version: latest
-      - run: cd starter/frontend && npm ci
-      - name: Run Linter
-        run: cd starter/frontend && npm run lint
 
-  test:
-    name: Test frontend
+      # Cache node_modules to speed up builds
+      - uses: actions/cache@v3
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Install the dependencies.
+      - run: cd starter/frontend && npm ci
+
+      # Run the tests
+      - run: cd starter/frontend && CI=true npm test
+
+  lint_job:
+    name: Lint Frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+
+      # Set up a Node.js environment using the specified node version.
+      - uses: actions/setup-node@v3
         with:
           node-version: latest
-      - run: cd starter/frontend && npm ci
-      - name: Run Tests
-        run: cd starter/frontend npm run test
 
-  build:
+      # Cache node_modules to speed up builds
+      - uses: actions/cache@v3
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Install dependencies and run linting with --fix
+      - run: cd starter/frontend && npm ci && npx eslint . --fix
+
+  build_job:
     name: Build Docker Image
-    needs: [lint, test]
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
+    needs: [test_job, lint_job]
     steps:
       - uses: actions/checkout@v3
+
       - name: Build Docker Image
-        run: docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.REACT_APP_MOVIE_API_URL }} -t mp-frontend:latest .
+        run: |
+          cd starter/frontend  
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=http://localhost:5000 --tag=mp-frontend:latest .
